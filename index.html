@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive E-Commerce Website</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <div class="container">
+        <h1>My E-Commerce Store</h1>
+        <nav>
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Shop</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+      <!-- Post Form -->
+      <section class="post-form">
+        <h2>Create a Post</h2>
+        <form id="postForm">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required />
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" required />
+          <label for="content">Content:</label>
+          <textarea id="content" name="content" required></textarea>
+          <button type="submit" id="submit">Post</button>
+        </form>
+      </section>
+
+      <!-- Products/Post Cards -->
+      <section id="posts" class="card-grid"></section>
+      <section id="products" class="card-grid"></section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <p>&copy; 2024 My E-Commerce Store</p>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getDatabase, ref, set, get, child, update, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCy0-hAUDjg_WZ0LA-7Q56ojBL0VWGRaQs",
+        authDomain: "e-commerce-project-67a5c.firebaseapp.com",
+        projectId: "e-commerce-project-67a5c",
+        storageBucket: "e-commerce-project-67a5c.appspot.com",
+        messagingSenderId: "91977486705",
+        appId: "1:91977486705:web:ced0e3ec058b1bce54e6d0",
+        measurementId: "G-YGXSXD0KS0"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      document.getElementById('postForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const id = Date.now().toString();
+
+        set(ref(db, 'posts/' + id), {
+          username: username,
+          title: title,
+          content: content,
+          createdAt: serverTimestamp()
+        }).then(() => {
+          console.log('Post created successfully');
+          fetchPosts();
+        }).catch((error) => {
+          console.error('Error creating post:', error);
+        });
+
+        document.getElementById('postForm').reset();
+      });
+
+      function fetchPosts() {
+        const postsRef = ref(db, 'posts');
+        get(postsRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const posts = snapshot.val();
+            const postsContainer = document.getElementById('posts');
+            postsContainer.innerHTML = '';
+            for (let id in posts) {
+              const post = posts[id];
+              const postCard = document.createElement('div');
+              postCard.className = 'card';
+              postCard.innerHTML = `
+                <h3>Title : ${post.title}</h3>
+                <p>Content : ${post.content}</p>
+                <p><small>Posted by ${post.username}</small></p>
+                <button class="edit-btn" onclick="editPost('${id}', '${post.username}', '${post.title}', '${post.content}')">Edit</button>
+                <button class="delete-btn" onclick="deletePost('${id}')">Delete</button>
+              `;
+              postsContainer.appendChild(postCard);
+            }
+          } else {
+            console.log('No posts available');
+          }
+        }).catch((error) => {
+          console.error('Error fetching posts:', error);
+        });
+      }
+
+      window.deletePost = function(id) {
+        remove(ref(db, 'posts/' + id)).then(() => {
+          console.log('Post deleted successfully');
+          fetchPosts();
+        }).catch((error) => {
+          console.error('Error deleting post:', error);
+        });
+      }
+
+      window.editPost = function(id, username, title, content) {
+        const newUsername = prompt('Edit username:', username);
+        const newTitle = prompt('Edit title:', title);
+        const newContent = prompt('Edit content:', content);
+
+        if (newUsername !== null && newTitle !== null && newContent !== null) {
+          update(ref(db, 'posts/' + id), {
+            username: newUsername,
+            title: newTitle,
+            content: newContent
+          }).then(() => {
+            console.log('Post updated successfully');
+            fetchPosts();
+          }).catch((error) => {
+            console.error('Error updating post:', error);
+          });
+        }
+      }
+
+      // Fetch posts on page load
+      fetchPosts();
+
+      // Product Fetching
+      function Products(Title, Price, Description, Image) {
+        this.Title = Title;
+        this.Price = Price;
+        this.Description = Description;
+        this.Image = Image;
+      }
+
+      async function render() {
+        let response = await fetch("https://fakestoreapi.com/products?limit=20");
+        let x = await response.json(); //object
+        x.map((element) => {
+          let Title = element.title;
+          let Price = element.price;
+          let Description = element.description;
+          let Image = element.image;
+          let product = new Products(Title, Price, Description, Image);
+          createProduct(product);
+        });
+      }
+      render();
+
+      function createProduct(product) {
+        let div = document.getElementById("products");
+        let newDiv = document.createElement("div");
+        newDiv.className = 'card';
+        div.appendChild(newDiv);
+        let p1 = document.createElement("h3");
+        p1.innerHTML = product.Title;
+        newDiv.appendChild(p1);
+        let p2 = document.createElement("p");
+        p2.innerHTML = `$${product.Price}`;
+        newDiv.appendChild(p2);
+        let p3 = document.createElement("p");
+        p3.innerHTML = product.Description;
+        newDiv.appendChild(p3);
+        let p4 = document.createElement("img");
+        p4.setAttribute("src", product.Image);
+        p4.style.width = "100px";
+        p4.style.height = "100px";
+        newDiv.appendChild(p4);
+      }
+    </script>
+  </body>
+</html>
