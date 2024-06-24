@@ -17,4 +17,4 @@ This project is a e-commerce website featuring a post form, dynamic product card
 
 ### Live Demo
 
-Check out the live demo [here](https://e-commerce-project-67a5c.web.app/).
+Check out the live demo [here](https://abedalmajed.github.io/fakestoreapi/).
